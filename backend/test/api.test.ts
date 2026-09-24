@@ -1,6 +1,6 @@
 import request from 'supertest';
 import { createApp } from '../src/app';
-import { addEmployee, createTestDb, fixedClock } from './helpers';
+import { addEmployee, createTestDb, fixedClock } from './helper';
 
 function setup() {
   const db = createTestDb();
