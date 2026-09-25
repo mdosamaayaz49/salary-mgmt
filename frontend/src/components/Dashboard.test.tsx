@@ -33,7 +33,7 @@ describe('Dashboard', () => {
     expect(within(engineeringRow).getByText('$44,000')).toBeInTheDocument();
     expect(screen.getByText('3')).toBeInTheDocument(); // total headcount
     expect(screen.getByText('$180,000')).toBeInTheDocument(); // total payroll
-    expect(screen.getByText(/fixed FX rates as of 2026-01-01/)).toBeInTheDocument();
+    expect(screen.getByText(/All figures are current annual salaries converted to USD using fixed FX rates/)).toBeInTheDocument();
   });
 
   it('regroups the statistics by country', async () => {
