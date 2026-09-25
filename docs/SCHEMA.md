@@ -1,4 +1,4 @@
-# Schema sketch (DRAFT — awaiting sign-off before migrations)
+# Schema (confirmed)
 
 ## ERD (one line)
 
@@ -21,7 +21,9 @@ salary" is *derived* (latest row), never stored twice.
 | job_level     | TEXT    | NOT NULL, CHECK IN (`L1`…`L5`)                      |
 | hire_date     | TEXT    | NOT NULL, ISO date `YYYY-MM-DD`                     |
 
-Indexes: `(department)`, `(country_code)`, `(job_level)`, `(full_name)`.
+Indexes: `(department)`, `(country_code)`, `(job_level)` for filters, and `(full_name, id)` for the
+list's sort order (migration 003). That index serves `ORDER BY`, not search: a substring match
+(`LIKE '%term%'`) can't use a B-tree index, and scanning 10k names takes a few ms.
 No currency column here — see below.
 
 ### salary_history (append-only)
@@ -52,10 +54,14 @@ No UPDATE/DELETE path in the API. A correction is a new row with
 One rate per currency, not a time series. Every aggregate converts using this
 single rate, regardless of when a salary took effect.
 
+Migration 002 seeds illustrative rates. Refreshing again = add another migration (applied
+migrations are never edited). Tests pin their own rates in `test/helpers.ts`, so a
+refresh never changes test expectations.
+
 ### current_salaries (VIEW)
-Latest `salary_history` row per employee (window function
-`ROW_NUMBER() OVER (PARTITION BY employee_id ORDER BY effective_date DESC, id DESC)`),
-joined to `fx_rates` to expose `amount_usd`. List, detail and aggregate queries
+Latest `salary_history` row per employee (a correlated `ORDER BY effective_date DESC,
+id DESC LIMIT 1` subquery, served by the index above), joined to `fx_rates` to expose
+`amount_usd`. List, detail and aggregate queries
 all read from this view, so "what is current" is defined exactly once.
 
 ## Decisions & trade-offs
@@ -64,7 +70,7 @@ all read from this view, so "what is current" is defined exactly once.
    meaningless without its currency; if someone relocates (INR → GBP) older
    rows stay correct. The API still exposes "employee currency" as the current
    record's currency, satisfying the requirements field list.
-2. **Current salary is derived, not denormalized.** At 10k employees / ~30k
+2. **Current salary is derived, not denormalized.** At 10k employees / ~50k
    history rows the view costs a few ms; a denormalized column would be one
    more thing that can drift from the audit trail.
 3. **Whole-unit integer amounts.** Annual salaries don't need cents, and
@@ -80,3 +86,8 @@ all read from this view, so "what is current" is defined exactly once.
    tests, raw SQL is the right level for a handful of queries. Knex would add a
    query-builder layer we don't need. Migrations = numbered `.sql` files applied
    in order by a ~20-line runner.
+
+## Confirmed decisions
+- Currency is stored on each `salary_history` row.
+- Future-dated salary records are **rejected**; "today" comes from an injected clock, never `new Date()` inside business logic.
+- One static USD rate per currency; no historical FX.

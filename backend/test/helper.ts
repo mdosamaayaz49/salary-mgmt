@@ -1,8 +1,28 @@
-import { Clock } from '../src/clock';
 import { openDb, type Db } from '../src/db';
+import type { Clock } from '../src/salaries/addSalaryRecord';
+
+/**
+ * Tests pin their own FX rates so the aggregation math in the tests stays readable
+ * (5,000,000 INR = 60,000 USD) and doesn't change when the real snapshot is refreshed.
+ */
+export const TEST_USD_PER_UNIT: Record<string, number> = {
+  USD: 1,
+  GBP: 1.27,
+  EUR: 1.08,
+  INR: 0.012,
+  SGD: 0.74,
+  JPY: 0.0067,
+  BRL: 0.18,
+};
+export const TEST_FX_AS_OF = '2026-01-01';
 
 export function createTestDb(): Db {
-  return openDb(':memory:');
+  const db = openDb(':memory:');
+  const pinRate = db.prepare('UPDATE fx_rates SET usd_per_unit = ?, as_of = ? WHERE currency_code = ?');
+  for (const [currencyCode, usdPerUnit] of Object.entries(TEST_USD_PER_UNIT)) {
+    pinRate.run(usdPerUnit, TEST_FX_AS_OF, currencyCode);
+  }
+  return db;
 }
 
 export const fixedClock = (today: string): Clock => ({
