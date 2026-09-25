@@ -53,7 +53,7 @@ export function Dashboard({ filterOptions }: DashboardProps) {
   return (
     <Stack spacing={2}>
       <Paper sx={{ p: 2 }}>
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ md: 'center' }}>
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ alignItems: { md: 'center' } }}>
           <ToggleButtonGroup
             exclusive
             size="small"

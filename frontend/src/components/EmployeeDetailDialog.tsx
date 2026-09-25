@@ -69,7 +69,7 @@ export function EmployeeDetailDialog({
         {!employee && !error && <CircularProgress />}
         {employee && (
           <Stack spacing={3}>
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
               <Chip label={employee.department} />
               <Chip label={employee.countryCode} />
               <Chip label={employee.jobLevel} />

@@ -36,7 +36,7 @@ export function addEmployee(db: Db, employee: TestEmployee): number {
     )
     .run(
       employee.name ?? 'Test Person',
-      employee.country ?? 'IN',
+      employee.country ?? 'US',
       employee.department ?? 'Engineering',
       employee.level ?? 'L2',
       hireDate,
